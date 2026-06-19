@@ -1,7 +1,32 @@
+mod ascii;
+
+use ascii::{ARCH_LOGO, DEBIAN_LOGO, FEDORA_LOGO, LINUX_LOGO, UBUNTU_LOGO};
 use owo_colors::OwoColorize;
 use std::{env, fs, process::Command};
 
 fn main() {
+    let mut spacing: &str = "     ";
+    let args: Vec<String> = env::args().collect();
+    let args_length: u32 = env::args().len() as u32;
+    let distro: &str = if args_length > 1 {
+        &args[1].to_lowercase()
+    } else {
+        ""
+    };
+    let current_logo = if distro == "arch" {
+        ARCH_LOGO
+    } else if distro == "debian" {
+        DEBIAN_LOGO
+    } else if distro == "fedora" {
+        FEDORA_LOGO
+    } else if distro == "ubuntu" {
+        UBUNTU_LOGO
+    } else if distro == "linux" {
+        LINUX_LOGO
+    } else {
+        spacing = "";
+        [""; 15]
+    }; //TODO: determine OS using the first word of the os string instead of flag
     let username: String = if let Ok(user) = env::var("USER") {
         user
     } else {
@@ -97,12 +122,20 @@ fn main() {
     let packages: u32 = count_packages();
     let gpu: String = get_gpu();
 
-    print!("\n{}@{}\n", username.green(), hostname.green());
+    print!("\n{}{}", current_logo[0], spacing);
+    print!("{}@{}\n", username.green(), hostname.green());
+    print!("{}{}", current_logo[1], spacing);
     for _ in 0..length {
         print!("-");
     }
-    println!("\n{}: {}", "OS".green(), os.green());
+    print!("\n");
+    print!("{}{}", current_logo[2], spacing);
+    println!("{}: {}", "OS".green(), os.green());
+    print!("{}{}", current_logo[3], spacing);
     println!("{}: {}", "Kernel".green(), kernel.green());
+    print!("{}{}", current_logo[4], spacing);
+    println!("{}: {} (apt)", "Packages".green(), packages.green());
+    print!("{}{}", current_logo[5], spacing);
     println!(
         "{}: {}{}{}",
         "Uptime".green(),
@@ -110,6 +143,7 @@ fn main() {
         u_minutes.green(),
         u_seconds.green()
     );
+    print!("{}{}", current_logo[6], spacing);
     println!(
         "{}: {} {} / {} {} ({}%)",
         "Memory".green(),
@@ -119,10 +153,22 @@ fn main() {
         mem_unit,
         ((used_mem / total_mem * 1000.0).round() / 10.0).green()
     );
+    print!("{}{}", current_logo[7], spacing);
+    println!("{}: {}", "Disk".green(), "5.0 GB / 12.0 GB".green());
+    print!("{}{}", current_logo[8], spacing);
     println!("{}: {}", "CPU".green(), cpu_model.green());
+    print!("{}{}", current_logo[9], spacing);
     println!("{}: {}", "GPU".green(), gpu.green());
+    print!("{}{}", current_logo[10], spacing);
     println!("{}: {}", "Shell".green(), shell.green());
-    println!("{}: {} (apt)", "Packages".green(), packages.green());
+    print!("{}{}", current_logo[11], spacing);
+    println!("{}: {}", "Private IP".green(), "127.0.0.1".green());
+    print!("{}{}", current_logo[12], spacing);
+    println!("{}: {}", "Public IP".green(), "127.0.0.1".green());
+    print!("{}{}", current_logo[13], spacing);
+    println!("{}: {}", "Locale".green(), "en_US".green());
+    print!("{}{}", current_logo[14], spacing);
+    println!("{}: {}", "Display".green(), "16x9".green());
     println!("");
 }
 
