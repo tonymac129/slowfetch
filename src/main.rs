@@ -2,7 +2,7 @@ mod ascii;
 
 use ascii::{ARCH_LOGO, DEBIAN_LOGO, FEDORA_LOGO, LINUX_LOGO, UBUNTU_LOGO};
 use owo_colors::OwoColorize;
-use std::{env, fs, process::Command};
+use std::{env, ffi::CString, fs, mem, net::UdpSocket, process::Command};
 
 fn main() {
     let mut spacing: &str = "     ";
@@ -121,6 +121,42 @@ fn main() {
     };
     let packages: u32 = count_packages();
     let gpu: String = get_gpu();
+    let fallback: String = "127.0.0.1".to_string();
+    let offline: String = "Offline".to_string();
+    let private_ip: String = if let Ok(socket) = UdpSocket::bind("0.0.0.0:0") {
+        if socket.connect("8.8.8.8:80").is_ok() {
+            if let Ok(address) = socket.local_addr() {
+                address.ip().to_string()
+            } else {
+                fallback
+            }
+        } else {
+            fallback
+        }
+    } else {
+        fallback
+    };
+    let public_ip: String =
+        if let Ok(output) = Command::new("curl").args(["-s", "ifconfig.me"]).output() {
+            if output.status.success() {
+                String::from_utf8_lossy(&output.stdout).trim().to_string()
+            } else {
+                offline
+            }
+        } else {
+            offline
+        };
+    let locale: String = if let Ok(lang) = env::var("LANG") {
+        lang.to_string()
+    } else {
+        "Unknown".to_string()
+    };
+    let battery: String = fs::read_to_string("/sys/class/power_supply/BAT0/capacity")
+        .expect("Found file!")
+        .trim()
+        .to_string();
+    let disk = get_disk();
+    let empty: String = " ".repeat(current_logo[0].len());
 
     print!("\n{}{}", current_logo[0], spacing);
     print!("{}@{}\n", username.green(), hostname.green());
@@ -136,6 +172,13 @@ fn main() {
     print!("{}{}", current_logo[4], spacing);
     println!("{}: {} (apt)", "Packages".green(), packages.green());
     print!("{}{}", current_logo[5], spacing);
+    println!("{}: {}", "Shell".green(), shell.green());
+    println!("{}{}", current_logo[6], spacing);
+    print!("{}{}", current_logo[7], spacing);
+    println!("{}: {}", "CPU".green(), cpu_model.green());
+    print!("{}{}", current_logo[8], spacing);
+    println!("{}: {}", "GPU".green(), gpu.green());
+    print!("{}{}", current_logo[9], spacing);
     println!(
         "{}: {}{}{}",
         "Uptime".green(),
@@ -143,7 +186,7 @@ fn main() {
         u_minutes.green(),
         u_seconds.green()
     );
-    print!("{}{}", current_logo[6], spacing);
+    print!("{}{}", current_logo[10], spacing);
     println!(
         "{}: {} {} / {} {} ({}%)",
         "Memory".green(),
@@ -153,22 +196,25 @@ fn main() {
         mem_unit,
         ((used_mem / total_mem * 1000.0).round() / 10.0).green()
     );
-    print!("{}{}", current_logo[7], spacing);
-    println!("{}: {}", "Disk".green(), "5.0 GB / 12.0 GB".green());
-    print!("{}{}", current_logo[8], spacing);
-    println!("{}: {}", "CPU".green(), cpu_model.green());
-    print!("{}{}", current_logo[9], spacing);
-    println!("{}: {}", "GPU".green(), gpu.green());
-    print!("{}{}", current_logo[10], spacing);
-    println!("{}: {}", "Shell".green(), shell.green());
     print!("{}{}", current_logo[11], spacing);
-    println!("{}: {}", "Private IP".green(), "127.0.0.1".green());
+    println!(
+        "{}: {} {} / {} {} ({}%)",
+        "Disk".green(),
+        disk.1.green(),
+        disk.0,
+        disk.2.green(),
+        disk.0,
+        disk.3.green()
+    );
     print!("{}{}", current_logo[12], spacing);
-    println!("{}: {}", "Public IP".green(), "127.0.0.1".green());
-    print!("{}{}", current_logo[13], spacing);
-    println!("{}: {}", "Locale".green(), "en_US".green());
+    println!("{}: {}%", "Battery".green(), battery.green());
+    println!("{}{}", current_logo[13], spacing);
     print!("{}{}", current_logo[14], spacing);
-    println!("{}: {}", "Display".green(), "16x9".green());
+    println!("{}: {}", "Private IP".green(), private_ip.green());
+    print!("{}", empty);
+    println!("{}: {}", "Public IP".green(), public_ip.green());
+    print!("{}", empty);
+    println!("{}: {}", "Locale".green(), locale.green());
     println!("");
 }
 
@@ -217,5 +263,29 @@ fn get_gpu() -> String {
         }
     } else {
         "Unknown".to_string()
+    }
+}
+
+fn get_disk() -> (String, f64, f64, f64) {
+    unsafe {
+        let mut stat: libc::statvfs = mem::zeroed();
+        let path: CString = CString::new("/").unwrap();
+        if libc::statvfs(path.as_ptr(), &mut stat) == 0 {
+            let block = stat.f_frsize as f64;
+            let mut total = block * stat.f_blocks as f64;
+            let mut used = total - block * stat.f_bavail as f64;
+            let mut unit: String = "B".to_string();
+            if used > 500000000.0 {
+                used = (used / 10000000.0).floor() / 100.0;
+                total = (total / 10000000.0).floor() / 100.0;
+                unit = "GB".to_string();
+            } else if used > 1000000.0 {
+                used = (used / 10000.0).floor() / 100.0;
+                total = (total / 10000.0).floor() / 100.0;
+                unit = "MB".to_string();
+            }
+            return (unit, used, total, ((used / total * 1000.0).floor() / 10.0));
+        }
+        return ("B".to_string(), 0.0, 0.0, 0.0);
     }
 }
