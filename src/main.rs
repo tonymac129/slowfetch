@@ -5,48 +5,38 @@ use owo_colors::OwoColorize;
 use std::{env, ffi::CString, fs, mem, net::UdpSocket, process::Command};
 
 fn main() {
-    let mut spacing: &str = "     ";
-    let args: Vec<String> = env::args().collect();
-    let args_length: u32 = env::args().len() as u32;
-    let distro: &str = if args_length > 1 {
-        &args[1].to_lowercase()
-    } else {
-        ""
-    };
-    let current_logo = if distro == "arch" {
-        ARCH_LOGO
-    } else if distro == "debian" {
-        DEBIAN_LOGO
-    } else if distro == "fedora" {
-        FEDORA_LOGO
-    } else if distro == "ubuntu" {
-        UBUNTU_LOGO
-    } else if distro == "linux" {
-        LINUX_LOGO
-    } else {
-        spacing = "";
-        [""; 15]
-    }; //TODO: determine OS using the first word of the os string instead of flag
+    let spacing: &str = "     ";
+    let mut current_logo = LINUX_LOGO;
     let username: String = if let Ok(user) = env::var("USER") {
         user
     } else {
         "unknown".to_string()
     };
     let hostname: String = fs::read_to_string("/etc/hostname")
-        .expect("Found file!")
+        .expect("File not found, Slowfetch is only available for Linux devices")
         .trim()
         .to_string();
     let length: u32 = (username.len() as u32) + (hostname.len() as u32) + 1;
-    let contents: String = fs::read_to_string("/etc/os-release").expect("Found file!");
+    let contents: String = fs::read_to_string("/etc/os-release")
+        .expect("File not found, Slowfetch is only available for Linux devices");
     let mut os: String = "Linux".to_string();
     for line in contents.lines() {
         if line.starts_with("PRETTY_NAME") {
             os = line.replace("PRETTY_NAME=", "").replace('"', "");
         }
     }
+    if os.to_lowercase().contains("debian") {
+        current_logo = DEBIAN_LOGO;
+    } else if os.to_lowercase().contains("arch") {
+        current_logo = ARCH_LOGO;
+    } else if os.to_lowercase().contains("fedora") {
+        current_logo = FEDORA_LOGO;
+    } else if os.to_lowercase().contains("ubuntu") {
+        current_logo = UBUNTU_LOGO;
+    }
     let mut kernel: String = "".to_string();
     for (i, word) in fs::read_to_string("/proc/version")
-        .expect("Found file!")
+        .expect("File not found, Slowfetch is only available for Linux devices")
         .split(" ")
         .enumerate()
     {
@@ -56,7 +46,7 @@ fn main() {
         }
     }
     let mut uptime: f32 = fs::read_to_string("/proc/uptime")
-        .expect("Found file!")
+        .expect("File not found, Slowfetch is only available for Linux devices")
         .split(" ")
         .next()
         .unwrap()
@@ -65,7 +55,8 @@ fn main() {
     let u_hours: String = calc_time(&mut uptime, 3600.0, "hour");
     let u_minutes: String = calc_time(&mut uptime, 60.0, "minute");
     let u_seconds: String = calc_time(&mut uptime, 1.0, "second");
-    let memory: String = fs::read_to_string("/proc/meminfo").expect("Found file!");
+    let memory: String = fs::read_to_string("/proc/meminfo")
+        .expect("File not found, Slowfetch is only available for Linux devices");
     let mut total_mem: f32 = 0.0;
     let mut available_mem: f32 = 0.0;
     for line in memory.lines() {
@@ -96,7 +87,8 @@ fn main() {
         total_mem /= 1024.0;
         mem_unit = "MB".to_string();
     }
-    let cpu: String = fs::read_to_string("/proc/cpuinfo").expect("Found file!");
+    let cpu: String = fs::read_to_string("/proc/cpuinfo")
+        .expect("File not found, Slowfetch is only available for Linux devices");
     let mut cpu_model: String = "Unknown".to_string();
     for line in cpu.lines() {
         if line.starts_with("model name") {
@@ -111,7 +103,7 @@ fn main() {
         let values: Vec<&str> = stat.split_whitespace().collect();
         if values.len() > 3 {
             fs::read_to_string(format!("/proc/{}/comm", values[3]))
-                .expect("Found file!")
+                .expect("File not found, Slowfetch is only available for Linux devices")
                 .replace("\n", "")
         } else {
             "Unknown".to_string()
@@ -152,7 +144,7 @@ fn main() {
         "Unknown".to_string()
     };
     let battery: String = fs::read_to_string("/sys/class/power_supply/BAT0/capacity")
-        .expect("Found file!")
+        .expect("File not found, Slowfetch is only available for Linux devices")
         .trim()
         .to_string();
     let disk = get_disk();
@@ -161,61 +153,71 @@ fn main() {
     print!("\n{}{}", current_logo[0], spacing);
     print!("{}@{}\n", username.green(), hostname.green());
     print!("{}{}", current_logo[1], spacing);
+    print!("\x1b[0m");
     for _ in 0..length {
         print!("-");
     }
     print!("\n");
     print!("{}{}", current_logo[2], spacing);
-    println!("{}: {}", "OS".green(), os.green());
+    println!("{}: {}", "OS".green(), os);
     print!("{}{}", current_logo[3], spacing);
-    println!("{}: {}", "Kernel".green(), kernel.green());
+    println!("{}: {}", "Kernel".green(), kernel);
     print!("{}{}", current_logo[4], spacing);
-    println!("{}: {} (apt)", "Packages".green(), packages.green());
+    println!("{}: {} (apt)", "Packages".green(), packages);
     print!("{}{}", current_logo[5], spacing);
-    println!("{}: {}", "Shell".green(), shell.green());
+    println!("{}: {}", "Shell".green(), shell);
     println!("{}{}", current_logo[6], spacing);
     print!("{}{}", current_logo[7], spacing);
-    println!("{}: {}", "CPU".green(), cpu_model.green());
+    println!("{}: {}", "CPU".green(), cpu_model);
     print!("{}{}", current_logo[8], spacing);
-    println!("{}: {}", "GPU".green(), gpu.green());
+    println!("{}: {}", "GPU".green(), gpu);
     print!("{}{}", current_logo[9], spacing);
     println!(
         "{}: {}{}{}",
         "Uptime".green(),
-        u_hours.green(),
-        u_minutes.green(),
-        u_seconds.green()
+        u_hours,
+        u_minutes,
+        u_seconds
     );
     print!("{}{}", current_logo[10], spacing);
     println!(
         "{}: {} {} / {} {} ({}%)",
         "Memory".green(),
-        ((used_mem * 100.0).round() / 100.0).green(),
+        ((used_mem * 100.0).round() / 100.0),
         mem_unit,
-        ((total_mem * 100.0).round() / 100.0).green(),
+        ((total_mem * 100.0).round() / 100.0),
         mem_unit,
-        ((used_mem / total_mem * 1000.0).round() / 10.0).green()
+        ((used_mem / total_mem * 1000.0).round() / 10.0)
     );
     print!("{}{}", current_logo[11], spacing);
     println!(
         "{}: {} {} / {} {} ({}%)",
         "Disk".green(),
-        disk.1.green(),
+        disk.1,
         disk.0,
-        disk.2.green(),
+        disk.2,
         disk.0,
-        disk.3.green()
+        disk.3
     );
     print!("{}{}", current_logo[12], spacing);
-    println!("{}: {}%", "Battery".green(), battery.green());
+    println!("{}: {}%", "Battery".green(), battery);
     println!("{}{}", current_logo[13], spacing);
     print!("{}{}", current_logo[14], spacing);
-    println!("{}: {}", "Private IP".green(), private_ip.green());
+    println!("{}: {}", "Private IP".green(), private_ip);
     print!("{}", empty);
-    println!("{}: {}", "Public IP".green(), public_ip.green());
+    println!("{}: {}", "Public IP".green(), public_ip);
     print!("{}", empty);
-    println!("{}: {}", "Locale".green(), locale.green());
-    println!("");
+    println!("{}: {}", "Locale".green(), locale);
+    print!("\n{}", empty);
+    for i in 40..48 {
+        print!("\x1b[{}m   \x1b[0m", i);
+    }
+    print!("\n{}", empty);
+    for i in 100..108 {
+        print!("\x1b[{}m   \x1b[0m", i);
+    }
+
+    println!("\n");
 }
 
 fn calc_time(uptime: &mut f32, multiplier: f32, name: &str) -> String {
