@@ -146,7 +146,7 @@ fn main() {
     } else {
         "Unknown".to_string()
     };
-    let battery: String = fs::read_to_string("/sys/class/power_supply/BAT0/capacity").unwrap_or("No battery".to_string());
+    let battery: String = fs::read_to_string("/sys/class/power_supply/BAT0/capacity").unwrap_or("0".to_string());
     let disk = get_disk();
     let empty: String = " ".repeat(current_logo[0].len());
 
@@ -200,7 +200,7 @@ fn main() {
         disk.3
     );
     print!("{}{}", current_logo[12], spacing);
-    println!("{}: {}", "Battery".green(), battery);
+    println!("{}: {}%", "Battery".green(), battery);
     println!("{}{}", current_logo[13], spacing);
     print!("{}{}", current_logo[14], spacing);
     println!("{}: {}", "Private IP".green(), private_ip);
