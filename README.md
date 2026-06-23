@@ -26,9 +26,10 @@ Slowfetch outputs a colored ASCII logo of the distro if it's Debian, Arch, Ubunt
 To use Slowfetch on your operating system (it's only available for Linux):
 
 1. Download the executable from the [releases](https://github.com/tonymac129/slowfetch/releases) page
+2. `cd` into the directory containing the downloaded `slowfetch` file
 2. Run `chmod +x slowfetch` to make the downloaded Slowfetch file an executable
-3. Run `mv slowfetch ~/.local/bin` to move the file into the binary path directory
-4. Running `slowfetch` should now work properly and output the logo and stats!
+3. Run `sudo mv slowfetch /usr/local/bin` to move the file into the binary path directory
+4. `slowfetch` should now be recognized as a command and running it outputs the logo and stats!
 
 To set up the development environment for Slowfetch using Cargo:
 
