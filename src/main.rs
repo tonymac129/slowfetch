@@ -1,7 +1,6 @@
 use owo_colors::OwoColorize;
 use std::{env, ffi::CString, fs, mem, net::UdpSocket, process::Command};
 
-
 fn main() {
     let spacing: &str = "     ";
     let mut current_logo = LINUX_LOGO;
@@ -110,6 +109,15 @@ fn main() {
         "Unknown".to_string()
     };
     let packages: u32 = count_packages();
+    let package_manager: &str = if Command::new("pacman").arg("--version").output().is_ok() {
+        " (pacman)"
+    } else if Command::new("apt").arg("--version").output().is_ok() {
+        " (apt)"
+    } else if Command::new("dnf").arg("--version").output().is_ok() {
+        " (dnf)"
+    } else {
+        ""
+    };
     let gpu: String = get_gpu();
     let fallback: String = "127.0.0.1".to_string();
     let offline: String = "Offline".to_string();
@@ -136,9 +144,11 @@ fn main() {
         } else {
             offline
         };
-	
+
     let args: Vec<String> = std::env::args().collect();
-    if args.len() > 1 && args[1].to_string().trim() == "--no-dox".to_string().trim() {
+    if args.len() > 1
+        && (args[1].to_lowercase().trim() == "--censor" || args[1].to_lowercase().trim() == "-c")
+    {
         public_ip = "CENSORED".to_string();
     }
     let locale: String = if let Ok(lang) = env::var("LANG") {
@@ -146,7 +156,10 @@ fn main() {
     } else {
         "Unknown".to_string()
     };
-    let battery: String = fs::read_to_string("/sys/class/power_supply/BAT0/capacity").unwrap_or("0".to_string());
+    let battery: String = fs::read_to_string("/sys/class/power_supply/BAT0/capacity")
+        .unwrap_or("0".to_string())
+        .trim()
+        .to_string();
     let disk = get_disk();
     let empty: String = " ".repeat(current_logo[0].len());
 
@@ -163,7 +176,7 @@ fn main() {
     print!("{}{}", current_logo[3], spacing);
     println!("{}: {}", "Kernel".green(), kernel);
     print!("{}{}", current_logo[4], spacing);
-    println!("{}: {} (apt)", "Packages".green(), packages);
+    println!("{}: {}{}", "Packages".green(), packages, package_manager);
     print!("{}{}", current_logo[5], spacing);
     println!("{}: {}", "Shell".green(), shell);
     println!("{}{}", current_logo[6], spacing);

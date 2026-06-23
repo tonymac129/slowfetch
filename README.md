@@ -4,12 +4,31 @@ Slowfetch is a simple CLI tool that reads your device's hardware, operating syst
 
 ## Features
 
-- Displays the logged in user's username and the device's hostname
-- Displays the OS and Kernel names and versions
-- Displays current uptime in a readable format
-- More coming soon!
+Slowfetch outputs a colored ASCII logo of the distro if it's Debian, Arch, Ubuntu, or Fedora, otherwise it shows a default Linux logo. It also lists some useful system and hardware information/statistics, categorized into three sections, which include:
+
+- User's username and the device's hostname
+- OS and Kernel names and versions
+- Number of packages installed and the package manager
+- Current shell environment
+- CPU and GPU models
+- Current uptime in a readable format
+- Current memory and disk usage along with a percentage
+- Current battery percentage
+- Private IP
+- Public IP, which can be censored by passing a "--censor" or "-c" flag
+- System locale
+- Rectangle composed of 16 blocks of different colors
 
 ## Getting started
+
+To use Slowfetch on your operating system (it's only available for Linux):
+
+1. Download the executable from the [releases](https://github.com/tonymac129/slowfetch/releases) page
+2. Run `chmod +x slowfetch` to make the downloaded Slowfetch file an executable
+3. Run `mv slowfetch ~/.local/bin` to move the file into the binary path directory
+4. Running `slowfetch` should now work properly and output the logo and stats!
+
+To set up the development environment for Slowfetch using Cargo:
 
 1. Clone this project with `git clone https://github.com/tonymac129/slowfetch.git`
 2. Make sure you have Rust, Cargo, and other necessary build tools installed
@@ -19,4 +38,5 @@ Slowfetch is a simple CLI tool that reads your device's hardware, operating syst
 ## Tech stack
 
 - Rust for the core logic since this is supposed to be a ~~slow~~ fast fetching program 🦀
+- Cargo because this is a Rust project and everything written in Rust uses Cargo
 - The std library to interact with the system and owo-colors for color coding
