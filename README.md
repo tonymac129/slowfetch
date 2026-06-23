@@ -2,6 +2,8 @@
 
 Slowfetch is a simple CLI tool that reads your device's hardware, operating system, and runtime information and outputs them in a clean, organized, and visually appealing list so you can access the statistics quickly! (plus, you also get to flex the beautiful, glorious, majestic, perfect, and breathtaking logo of your operating system!)
 
+![Slowfetch output for Arch](banner.jpg)
+
 ## Features
 
 Slowfetch outputs a colored ASCII logo of the distro if it's Debian, Arch, Ubuntu, or Fedora, otherwise it shows a default Linux logo. It also lists some useful system and hardware information/statistics, categorized into three sections, which include:
